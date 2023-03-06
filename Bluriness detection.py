@@ -3,23 +3,65 @@ import cv2
 import glob
 import os
 import pandas as pd
+import xml.etree.ElementTree as ET
+from PIL import Image
+
+def read_xml():
+
+    # put the path of xml files here
+    path = "C:/Users/17654/Desktop/Andy relabeled files"
+    dict = {}
+    for file in os.listdir(path):
+        if file.endswith('.xml'):
+            tree = ET.parse(os.path.join(path,file))
+            root = tree.getroot()
+            temp = []
+            filename = os.path.splitext(file)[0]+'.jpg'
+            for object in root.findall('object'):
+                n = object.find('bndbox')
+                xmin = int(n.find('xmin').text)
+                xmax = int(n.find('xmax').text)
+                ymin = int(n.find('ymin').text)
+                ymax = int(n.find('ymax').text)
+
+                temp.append((xmin, ymin, xmax, ymax))
+            dict[filename] = temp
+    return dict
 
 def get_name():
 
     # A function that get the name of every name of file in
     # the desination folder
 
-    path = "copy the path here"
+    path = "C:/Users/17654/Desktop/Images to Label/Andy"
     file_name = os.listdir(path)
 
     return file_name
+
+def crop_img(coordinates, img_path):
+    img = Image.open(img_path)
+    new_dir = os.path.splitext(img_path)[0]
+    if not os.path.exists(new_dir):
+        os.makedirs(new_dir)
+    for i, coords in enumerate(coordinates):
+       cropped_img = img.crop(coords)
+       cropped_img.save(os.path.join(new_dir, f"{i}_{coords}.jpg"))
+
+def save_crop_img():
+    temp = read_xml()
+    # put path of the image folder here
+    image_dir = "C:/Users/17654/Desktop/Images to Label/Andy"
+    for image_name, coords in temp.items():
+        image_path = os.path.join(os.getcwd(), image_dir, image_name)
+        crop_img(coords, image_path)
+
 
 def read_img():
 
     # A function that read every image in the destination folder
     # and return a list for future data processing
 
-    path = glob.glob("copy the path here*.jpg")
+    path = glob.glob("C:/Users/17654/Desktop/Images to Label/Andy/*.jpg")
     img_list = []
     for img in path:
         temp = cv2.imread(img)
@@ -65,3 +107,23 @@ if __name__ == "__main__":
     # set up excel to display result
     df = pd.DataFrame(list(dictionary.items()), columns=['img_name','blur value'])
     df.to_excel('blur detection.xlsx', index=False)
+    xml = read_xml()
+    print(xml)
+    save_crop_img()
+
+
+
+
+    #test
+    image1test = cv2.imread("C:/Users/17654/Desktop/Images to Label/Andy/02220455_0106/0_(353, 277, 401, 371).jpg")
+    gray1 = cv2.cvtColor(image1test, cv2.COLOR_BGR2GRAY)
+    cmp1 = laplacian_variance(gray1)
+    print(cmp1)
+    image2test = cv2.imread("C:/Users/17654/Desktop/Images to Label/Andy/02220455_0106/1_(676, 490, 740, 678).jpg")
+    gray2 = cv2.cvtColor(image2test, cv2.COLOR_BGR2GRAY)
+    cmp2 = laplacian_variance(gray2)
+    print(cmp1)
+    image3test = cv2.imread("C:/Users/17654/Desktop/Images to Label/Andy/02220455_0106/2_(1042, 316, 1074, 344).jpg")
+    gray3 = cv2.cvtColor(image3test, cv2.COLOR_BGR2GRAY)
+    cmp3 = laplacian_variance(gray3)
+    print(cmp3)
