@@ -7,7 +7,11 @@ import xml.etree.ElementTree as ET
 from PIL import Image
 
 def read_xml():
-
+    # read xml files and extract the coodinates of each bonding boxes
+    # and return a dictionary with keys correspond to image name and 
+    # values correspnd to coodinates
+    
+    
     # put the path of xml files here
     path = "C:/Users/17654/Desktop/Andy relabeled files"
     dict = {}
@@ -29,6 +33,12 @@ def read_xml():
     return dict
 
 def crop_img(coordinates, img_path, new_dir):
+    
+    # This function takes in coodinates, image path and a new directory that
+    # images are saved and crop all the bonding boxes in each image according 
+    # to the coodinates and save it to the new_dir.
+    
+    
     img = Image.open(img_path)
     if not os.path.exists(new_dir):
         os.makedirs(new_dir)
@@ -37,6 +47,10 @@ def crop_img(coordinates, img_path, new_dir):
        cropped_img.save(os.path.join(new_dir, f"{i}_{coords}.jpg"))
 
 def save_crop_img(new_dir):
+    
+    # This function first call the read_xml() funciton to get the dictionary, 
+    # and then save each cropped image in new_dir
+    
     temp = read_xml()
     # put path of the image folder here
     image_dir = "C:/Users/17654/Desktop/Images to Label/Andy"
@@ -44,6 +58,7 @@ def save_crop_img(new_dir):
         image_path = os.path.join(image_dir, image_name)
         crop_img(coords, image_path, new_dir)
 
+#replace this with the new destination folder path you want to save
 save_crop_img("C:/Users/17654/Desktop/Cropped Image")
 
 def get_name():
@@ -88,7 +103,7 @@ if __name__ == "__main__":
         cvt = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         cmp = laplacian_variance(cvt)
         blur_list.append(cmp)
-        threshold = 1954.1616589632376
+        threshold = 1178.5249339404377
         if cmp > threshold:
             dis = "Above mid"
         else:
@@ -96,6 +111,7 @@ if __name__ == "__main__":
         mid.append(dis)
     median = np.median(blur_list)
     name = get_name()
+    print(median)
     # set up dictionary which has keys with image name and values
     # are blurriness of image and whether or not it below or above median
     dictionary = dict(zip(name, zip(blur_list, mid)))
