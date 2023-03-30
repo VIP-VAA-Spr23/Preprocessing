@@ -5,13 +5,14 @@ import os
 import pandas as pd
 import xml.etree.ElementTree as ET
 from PIL import Image
+from skimage import io, transform
 
 def read_xml():
     # read xml files and extract the coodinates of each bonding boxes
-    # and return a dictionary with keys correspond to image name and 
+    # and return a dictionary with keys correspond to image name and
     # values correspnd to coodinates
-    
-    
+
+
     # put the path of xml files here
     path = "C:/Users/17654/Desktop/Andy relabeled files"
     dict = {}
@@ -33,12 +34,12 @@ def read_xml():
     return dict
 
 def crop_img(coordinates, img_path, new_dir):
-    
+
     # This function takes in coodinates, image path and a new directory that
-    # images are saved and crop all the bonding boxes in each image according 
+    # images are saved and crop all the bonding boxes in each image according
     # to the coodinates and save it to the new_dir.
-    
-    
+
+
     img = Image.open(img_path)
     if not os.path.exists(new_dir):
         os.makedirs(new_dir)
@@ -47,10 +48,10 @@ def crop_img(coordinates, img_path, new_dir):
        cropped_img.save(os.path.join(new_dir, f"{i}_{coords}.jpg"))
 
 def save_crop_img(new_dir):
-    
-    # This function first call the read_xml() funciton to get the dictionary, 
+
+    # This function first call the read_xml() funciton to get the dictionary,
     # and then save each cropped image in new_dir
-    
+
     temp = read_xml()
     # put path of the image folder here
     image_dir = "C:/Users/17654/Desktop/Images to Label/Andy"
@@ -61,12 +62,38 @@ def save_crop_img(new_dir):
 #replace this with the new destination folder path you want to save
 save_crop_img("C:/Users/17654/Desktop/Cropped Image")
 
+def coords_mids():
+    dict11 = read_xml()
+    combined_coords = []
+    for coords in dict11.values():
+        for values in coords:
+            combined_coords.append(values)
+    average = [sum(x) / len(x) for x in zip(*combined_coords)]
+    return average
+
+average = coords_mids()
+print(average)
+
+def resize_img():
+    path1 = glob.glob("C:/Users/17654/Desktop/Cropped Image/*.jpg")
+    average = coords_mids()
+    width = average[2] - average[0]
+    height = average[3] - average[1]
+    new_img_path = "C:/Users/17654/Desktop/resized img"
+    for img_path in path1:
+        img = cv2.imread(img_path)
+        resized_img = transform.resize(img, (height, width), preserve_range=True)
+        filename = os.path.basename(img_path)
+        io.imsave(f'{new_img_path}/{filename}', resized_img.astype(img.dtype))
+
+resize_img()
+
 def get_name():
 
     # A function that get the name of every name of file in
     # the desination folder
 
-    path = "C:/Users/17654/Desktop/Cropped Image"
+    path = "C:/Users/17654/Desktop/resized img"
     file_name = os.listdir(path)
 
     return file_name
@@ -76,7 +103,7 @@ def read_img():
     # A function that read every image in the destination folder
     # and return a list for future data processing
 
-    path = glob.glob("C:/Users/17654/Desktop/Cropped Image/*.jpg")
+    path = glob.glob("C:/Users/17654/Desktop/resized img/*.jpg")
     img_list = []
     for img in path:
         temp = cv2.imread(img)
@@ -111,7 +138,6 @@ if __name__ == "__main__":
         mid.append(dis)
     median = np.median(blur_list)
     name = get_name()
-    print(median)
     # set up dictionary which has keys with image name and values
     # are blurriness of image and whether or not it below or above median
     dictionary = dict(zip(name, zip(blur_list, mid)))
@@ -120,6 +146,3 @@ if __name__ == "__main__":
     # set up excel to display result
     df = pd.DataFrame(list(dictionary.items()), columns=['img_name','blur value'])
     df.to_excel('blur detection.xlsx', index=False)
-
-
-
